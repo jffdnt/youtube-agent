@@ -28,6 +28,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Setup YouTube Cookies
+      env:
+        YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
+      run: |
+        if [ -n "$YOUTUBE_COOKIES" ]; then
+          echo "$YOUTUBE_COOKIES" > cookies.txt
+        fi
+
     - name: Run YouTube Agent
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

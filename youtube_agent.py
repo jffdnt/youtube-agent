@@ -9,6 +9,7 @@ import schedule
 import requests
 import re
 import google.generativeai as genai
+import http.cookiejar
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -85,7 +86,15 @@ def get_latest_videos(channel_id):
 def get_transcript(video_id):
     """Retrieves and formats the transcript for a given video."""
     try:
-        transcript = YouTubeTranscriptApi().fetch(video_id)
+        # Load cookies if they exist
+        session = requests.Session()
+        session.headers.update({"Accept-Language": "en-US"})
+        if os.path.exists("cookies.txt"):
+            cookie_jar = http.cookiejar.MozillaCookieJar("cookies.txt")
+            cookie_jar.load(ignore_discard=True, ignore_expires=True)
+            session.cookies.update(cookie_jar)
+            
+        transcript = YouTubeTranscriptApi(http_client=session).fetch(video_id)
         formatter = TextFormatter()
         transcript_text = formatter.format_transcript(transcript)
         return transcript_text
