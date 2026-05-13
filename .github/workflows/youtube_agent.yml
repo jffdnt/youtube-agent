@@ -1,0 +1,45 @@
+name: YouTube Agent Daily Fetch
+
+on:
+  schedule:
+    # Runs at 12:00 UTC (roughly morning in the US) every day
+    - cron: '0 12 * * *'
+  workflow_dispatch: # Allows you to manually click a "Run" button in GitHub
+
+jobs:
+  fetch-transcripts:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required to allow the GitHub Action to commit the new files back to your repo
+      contents: write 
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run YouTube Agent
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python youtube_agent.py
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+        # Add the new insights and the updated state file
+        git add insights/ state.json
+        
+        # Commit and push only if there are new changes
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-fetched new YouTube transcripts" && git push)
